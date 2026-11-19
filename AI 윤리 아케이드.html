@@ -226,6 +226,21 @@ canvas.sp.wide{width:min(100%,360px)}
   <div class="crt"></div>
 </div>
 
+<style>
+.fighter.idle{opacity:.45}
+.fighter.atk .claim{border-color:var(--amber);box-shadow:6px 6px 0 var(--pink)}
+.hapno{font-family:var(--pixel);font-size:clamp(26px,3.4vw,56px);color:var(--amber);text-shadow:4px 4px 0 var(--pink)}
+.hit{font-family:var(--pixel);font-size:16px;color:var(--bad);animation:blink .5s steps(1) 4}
+.wait{font-family:var(--pixel);font-size:11px;color:var(--dim);margin:0}
+.shake{animation:shake .5s steps(6)}
+@keyframes shake{20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.fighter.r .sprite-wrap.flip.shake{animation:shakeR .5s steps(6)}
+@keyframes shakeR{0%,100%{transform:scaleX(-1)}20%{transform:scaleX(-1) translateX(-10px)}40%{transform:scaleX(-1) translateX(10px)}60%{transform:scaleX(-1) translateX(-6px)}}
+.facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.facts li{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline}
+.facts li b{font-family:var(--pixel);font-size:10px;font-weight:400;color:var(--void);background:var(--cyan);padding:4px 6px;white-space:nowrap}
+.src2{font-size:.72em;color:var(--dim);margin:0}
+</style>
 <script>
 /* ---------- 픽셀 스프라이트 ---------- */
 const GHOST=[[
@@ -250,6 +265,7 @@ const SPR = {
   devB:{pal:{h:'#1c1c3a',s:'#f0c08e',w:'#ffffff',k:'#150c2f',m:'#c4466a',c:'#2f8fff'},f:DEV},
   gamer:{pal:{a:'#ff7fb8',b:'#150c2f',w:'#ffffff',k:'#150c2f'},f:CAT},
   platform:{pal:{a:'#9fe0ff',b:'#2f8fff',w:'#ffffff',k:'#150c2f'},f:ROBOT},
+  ai:{pal:{a:'#7dffab',b:'#ff4f9a',w:'#ffffff',k:'#150c2f'},f:ROBOT},
   hydra:{pal:{a:'#b26bff',b:'#ffc83d',w:'#ffffff',k:'#150c2f'},f:[[
 ".aaa...aaa....aaa...aaa.",".awk...awk....kwa...kwa.",".aaab..aaab..baaa..baaa.","..a.....a......a.....a..","..a.....a......a.....a..","...a....a......a....a...","....a...a......a...a....",".....aaaaaaaaaaaaaa.....","....aaaaaaaaaaaaaaaa....","...aaaaaabbbbbbaaaaaa...","...aaaaaaaaaaaaaaaaaa...","....aa..aa....aa..aa...."],[
 "aaa.....aaa..aaa.....aaa","awk.....awk..kwa.....kwa","aaab....aaab.baaa...baaa",".a.......a....a......a..","..a......a....a.....a...","...a.....a....a....a....","....a....a....a...a.....",".....aaaaaaaaaaaaaa.....","....aaaaaaaaaaaaaaaa....","...aaaaaabbbbbbaaaaaa...","...aaaaaaaaaaaaaaaaaa...","...aa..aa......aa..aa..."]]},
@@ -282,17 +298,35 @@ const STAGES=[
   A:{t:'조용히 돈을 보낸다',s:500,tr:-15,r:'출시 일정은 지켰다. 두 달 뒤 같은 사람에게서 두 번째 메일이 온다. 이번엔 금액이 두 배다.'},
   B:{t:'신고하고 공개 대응한다',s:300,tr:20,r:'경찰에 신고하고 협박 사실을 커뮤니티에 알렸다. 일정은 흔들렸지만, 플레이어들이 원작을 지키자며 위시리스트에 게임을 추가한다.'}}
 ];
+const NEWS={
+  facts:[
+    ['10월 27일 무렵','Claude Code의 지시문에 “특정 기존 게임의 재현은 이름을 바꾸거나 독창적이라고 해도 만들지 않는다”는 규칙이 추가되었다는 사실이 사용자들에게 발견됐다.'],
+    ['10월 30일','Anthropic 측은 지시문에 두 문장을 추가했다고 확인했다. 남의 지식재산권을 침해하는 사용은 이용 정책 위반이라는 이유였다.'],
+    ['회사 입장','독창적인 게임, 같은 장르의 게임, 사용자 본인의 디자인과 자료로 만든 게임은 계속 지원하며, 잘못 막힌 사례는 신고를 받아 조정하겠다고 밝혔다.'],
+    ['개발자 반응','자기 게임이나 게임과 무관한 작업까지 거부당했다는 보고가 이어졌다. 사용자가 규칙을 끌 방법은 없다.']],
+  think:'이 규칙이 나오기 전, 한 개발사는 누군가 체험판을 AI에 넣어 복제할까 봐 신작의 공개 테스트를 취소하기도 했다. 복제를 막는 일과 정당한 개발을 지키는 일, 둘 다 할 수 있을까?'
+};
+const HAPS=[
+ {by:'L',claim:'AI에 게임 복제를 거부하는 규칙을 넣어 제재해야 한다.',
+  args:['AI로 남의 게임을 베껴 먼저 출시하면 원작 개발자의 수익이 줄어든다.','체험판 공개를 포기하는 개발사가 생겼고, “AI로 복제하겠다”는 협박도 가능해졌다.']},
+ {by:'R',claim:'내가 하던 정당한 프로젝트까지 갑자기 막혀 버렸다.',
+  args:['규칙이 생긴 뒤 자기 게임을 만들던 개발자의 작업도 거부되었다는 보고가 나왔다.','사용자가 규칙을 끌 수 없고, AI가 아이디어와 자료의 주인을 확인할 방법도 분명하지 않다.']},
+ {by:'L',claim:'게임 복제를 막는 것일 뿐, 다른 앱 개발과는 관계없다.',
+  args:['추가된 것은 두 문장이고, 독창적인 게임·장르 게임·내 자료로 만든 게임은 계속 지원된다.','차단 사례 중 일부는 게임 규칙이 아니라 기존 보안 안전장치 때문일 수 있다.']},
+ {by:'R',claim:'게임과 상관없는 질문도 보안상의 이유로 막히고 있다.',
+  args:['오류 분석, 안티치트 개발, 보안 점검 등에서 거부당했다는 사용자 보고가 이어졌다.','복제하려는 사람은 말을 바꾸거나 제한 없는 다른 AI를 쓰면 그만이라, 성실한 개발자만 불편해진다.']}
+];
 const VS=[
- {q:'아이디어가 비슷한 게임, 어디까지 제재해야 할까?',title:'개발자 VS 개발자',
-  L:{sp:'devA',name:'원작 개발자',claim:'트레일러를 베껴 먼저 파는 건 막아야 한다.',
-     args:['남이 내 아이디어를 표절해 먼저 출시하고 돈을 벌면, 내가 얻어야 할 수익이 줄어든다.','AI 덕분에 복제 시간이 짧아져서 이런 피해가 훨씬 쉽게 일어난다.','“AI로 먼저 만들어 출시하겠다”는 협박으로 돈을 뜯기는 피해까지 생긴다. 트레일러를 공개하는 것만으로 협박의 표적이 될 수 있다.']},
-  R:{sp:'devB',name:'다른 개발자',claim:'비슷하다는 이유만으로 제재하면 안 된다.',
-     args:['아이디어가 겹친다는 이유로 제재하면 게임 산업 전체가 위축된다.','지금도 비슷한 게임은 많지만, 그것을 모두 표절이라고 부르지 않는다.','복제 협박이나 고의적인 베끼기는 처벌해야 하지만, 그것을 이유로 비슷한 게임 전체를 규제해서는 안 된다.']}},
+ {q:'AI의 게임 복제 제한, 4합의 승자는?',title:'게임 개발자 VS 다른 개발자',
+  L:{sp:'devA',name:'게임 개발자',claim:'AI의 게임 복제는 막아야 한다.',
+     args:['복제된 게임이 먼저 나오면 원작자의 수익이 줄고, 복제 협박까지 생긴다. (1합)','막는 것은 특정 게임의 복제일 뿐, 다른 개발과는 관계없다. (3합)']},
+  R:{sp:'devB',name:'다른 개발자',claim:'복제 방지가 정당한 개발까지 막고 있다.',
+     args:['자기 프로젝트도 갑자기 막혔고, 규칙을 끌 수도 없다. (2합)','게임과 무관한 질문까지 거부되고, 정작 복제하려는 사람은 우회할 수 있다. (4합)']}},
  {q:'비슷한 게임이 올라왔을 때, 누가 가려내야 할까?',title:'게이머 VS 배급사',
   L:{sp:'gamer',name:'게이머',claim:'플랫폼은 게이머가 헷갈리지 않게 할 책임이 있다.',
-     args:['스팀 같은 유통 플랫폼은 다양한 작품을 허용하면서도 원작과 모방작을 혼동하지 않게 해야 한다.','제목이 비슷하다고 판매를 막기보다, 개발사 이름과 공식 영상을 쉽게 확인할 수 있게 해야 한다.','대표 이미지나 연출을 구체적으로 베꼈다는 신고에는 양측의 설명을 모두 들어야 한다.','협박범이 복제 게임을 실제로 올리면 게이머는 원작인 줄 알고 살 수 있다. 원작 개발사가 협박 피해를 신고하면 플랫폼이 빠르게 확인해야 한다.']},
+     args:['스팀 같은 유통 플랫폼은 다양한 작품을 허용하면서도 원작과 모방작을 혼동하지 않게 해야 한다.','제목이 비슷하다고 판매를 막기보다, 개발사 이름과 공식 영상을 쉽게 확인할 수 있게 해야 한다.','대표 이미지나 연출을 구체적으로 베꼈다는 신고에는 양측의 설명을 모두 들어야 한다.']},
   R:{sp:'platform',name:'배급사 (유통 플랫폼)',claim:'표절을 가려낼 책임을 플랫폼에만 지우면 안 된다.',
-     args:['등록되는 작품마다 표절 여부를 확인하면 게임 출시가 늦어진다.','작품을 구별하는 데 많은 인력과 비용이 든다.','결국 모든 책임을 배급사에게만 떠넘기는 구조가 된다.','협박을 받았다는 주장만으로 어느 쪽이 원작인지 판단하기 어렵다. 협박은 범죄이므로 수사기관이 다룰 문제다.']}}
+     args:['등록되는 작품마다 표절 여부를 확인하면 게임 출시가 늦어진다.','작품을 구별하는 데 많은 인력과 비용이 든다.','결국 모든 책임을 배급사에게만 떠넘기는 구조가 된다.']}}
 ];
 const VOTES=[
  {t:'모방한 개발자',d:'베낀 사람이 가장 큰 책임을 져야 한다'},
@@ -300,7 +334,8 @@ const VOTES=[
  {t:'AI 도구 제공사',d:'복제를 쉽게 만든 기술에도 안전장치가 필요하다'},
  {t:'정부·법 제도',d:'표절과 협박의 기준을 법으로 정해야 한다'}
 ];
-const SCREENS=['title',...STAGES.map((_,i)=>'s'+i),...VS.map((_,i)=>'v'+i),'boss','end'];
+const SCREENS=['title',...STAGES.map((_,i)=>'s'+i),'news',...HAPS.map((_,i)=>'h'+i),...VS.map((_,i)=>'v'+i),'boss','end'];
+const hpAfter=n=>{let l=100,r=100;for(let i=0;i<n;i++){if(HAPS[i].by==='L')r-=25;else l-=25;}return[l,r];};
 const PROG=SCREENS.filter(x=>x!=='title'&&x!=='end');
 
 /* ---------- 상태 ---------- */
@@ -318,7 +353,7 @@ function hud(){
   document.getElementById('hi').textContent=pad7(HI);
   const id=cur();
   document.getElementById('dots').innerHTML=PROG.map(p=>{
-    const done=p[0]==='s'?S.ch[+p.slice(1)]:p[0]==='v'?S.vs[+p.slice(1)].some(x=>x):S.votes.some(x=>x);
+    const done=p[0]==='s'?S.ch[+p.slice(1)]:p[0]==='v'?S.vs[+p.slice(1)].some(x=>x):(p==='news'||p[0]==='h')?SCREENS.indexOf(p)<S.i:S.votes.some(x=>x);
     return `<i class="${p===id?'on':(done?'done':'')}" ${p==='boss'?'style="border-color:var(--pink)"':''}></i>`;}).join('');
   const tr=document.getElementById('trust');const on=Math.round(t/10);
   tr.innerHTML=Array.from({length:10},(_,k)=>`<i class="${k<on?'on':''}"></i>`).join('');
@@ -341,8 +376,48 @@ function render(){
   cancelAnimationFrame(bgRAF);clearInterval(cdTimer);
   const id=cur();main.innerHTML='';
   if(id==='title')renderTitle();else if(id==='boss')renderBoss();else if(id==='end')renderEnd();
+  else if(id==='news')renderNews();else if(id[0]==='h')renderHap(+id.slice(1));
   else if(id[0]==='v')renderVS(+id.slice(1));else renderStage(+id.slice(1));
   main.scrollTop=0;hud();
+}
+function renderNews(){
+  const sec=document.createElement('section');sec.className='screen';
+  sec.innerHTML=`<div class="stage">
+    <div class="foe">
+      <span class="tag">BREAKING NEWS · 2026년 10–11월 실제 사례</span>
+      <h2>AI가 게임 복제를 거부하다</h2>
+      <p class="sub">Anthropic, Claude Code에 “기존 게임 재현 금지” 규칙 추가</p>
+      <div class="sprite-wrap"></div>
+      <div class="think"><b>THINK · 생각해 볼 점</b>${NEWS.think}</div>
+    </div>
+    <div class="play">
+      <div class="scenario"><p>AI 코딩 도구로 남의 게임을 베끼는 일이 늘자, AI 회사가 직접 막기 시작했다. 그런데 이번엔 다른 쪽에서 불만이 터졌다.</p></div>
+      <ul class="facts">${NEWS.facts.map(([d,t])=>`<li><b>${d}</b><span>${t}</span></li>`).join('')}</ul>
+      <p class="src2">출처: Game Developer(2026.11), GameRiv(2026.11.2), Dexerto, IBTimes 보도 종합. 차단 사례는 사용자 보고이며 하나하나 확인된 것은 아님.</p>
+      <p class="tiny">→ 이제 두 개발자가 4합으로 맞붙습니다</p>
+    </div></div>`;
+  sec.querySelector('.sprite-wrap').appendChild(spriteCanvas('ai'));
+  main.appendChild(sec);
+}
+function renderHap(k){
+  const h=HAPS[k],v=VS[0],before=hpAfter(k),after=hpAfter(k+1),atkL=h.by==='L';
+  const side=(f,cls,label,isAtk,hpv)=>`<div class="fighter ${cls} ${isAtk?'atk':'idle'}">
+      <div class="fhead"><span class="ptag">${label}</span><div class="hp" aria-hidden="true"><i style="width:${hpv}%"></i></div><h2 class="fname">${f.name}</h2></div>
+      <div class="sprite-wrap ${cls==='r'?'flip':''}"></div>
+      ${isAtk?`<p class="claim">${h.claim}</p><ul class="args">${h.args.map(x=>`<li>${x}</li>`).join('')}</ul>`:`<p class="wait">… 반격 준비 중</p>`}
+    </div>`;
+  const sec=document.createElement('section');sec.className='screen';
+  sec.innerHTML=`<span class="tag" style="text-align:center">ROUND 1 · ${v.title}</span>
+    <div class="vs">${side(v.L,'l','1P',atkL,before[0])}<div class="vsmid"><span class="hapno">${k+1}합</span><span class="hit" id="hit">HIT!</span></div>${side(v.R,'r','2P',!atkL,before[1])}</div>
+    <p class="tiny" style="text-align:center">${k<HAPS.length-1?'→ 다음 합':'→ 판정: 청중 투표'}</p>`;
+  sec.querySelectorAll('.sprite-wrap').forEach((w,j)=>w.appendChild(spriteCanvas(j?v.R.sp:v.L.sp)));
+  main.appendChild(sec);
+  setTimeout(()=>{
+    const fs=sec.querySelectorAll('.fighter');const d=atkL?1:0;
+    fs[d].querySelector('.hp i').style.width=after[d]+'%';
+    fs[d].querySelector('.sprite-wrap').classList.add('shake');
+    beep(180,.12,'sawtooth');
+  },450);
 }
 function renderTitle(){
   main.innerHTML=`<canvas id="bg" aria-hidden="true"></canvas>
@@ -355,8 +430,8 @@ function renderTitle(){
     <div class="howto">
       <div><b>STAGE 1–2</b>AI 때문에 생긴 두 가지 상황, 트레일러 표절과 복제 협박을 만납니다.</div>
       <div><b>A or B</b>스테이지마다 개발사가 되어 선택합니다. 점수는 매출, 게이지는 신뢰입니다.</div>
-      <div><b>VS ROUND 1–2</b>이해당사자끼리 맞붙습니다. 청중이 더 설득력 있는 쪽에 투표합니다.</div>
-      <div><b>FINAL BOSS</b>마지막엔 “책임은 누구에게?”를 놓고 청중 투표를 합니다.</div>
+      <div><b>NEWS + 4합</b>실제 뉴스를 보고, 게임 개발자와 다른 개발자가 4합으로 맞붙습니다. 승자는 청중이 판정합니다.</div>
+      <div><b>ROUND 2 + BOSS</b>게이머와 배급사가 맞붙고, 마지막엔 “책임은 누구에게?”를 놓고 투표합니다.</div>
     </div>
   </section>`;
   const t=document.getElementById('team');t.value=store('arcade-team')||'';t.addEventListener('input',()=>store('arcade-team',t.value));
@@ -418,7 +493,7 @@ function renderVS(k){
       <button class="fvote" data-s="${n}"><span>${label} 지지 · 키 ${n+1}</span><b>${n?b:a}</b></button>
     </div>`;
   const sec=document.createElement('section');sec.className='screen';
-  sec.innerHTML=`<span class="tag" style="text-align:center">VS ROUND ${k+1} · ${v.title}</span>
+  sec.innerHTML=`<span class="tag" style="text-align:center">${k===0?'ROUND 1 판정':'VS ROUND '+(k+1)} · ${v.title}</span>
     <p class="vsq">${v.q}</p>
     <div class="vs">${side(v.L,'l',0,hp[0],'1P')}<div class="vsmid">VS<small>청중 투표</small></div>${side(v.R,'r',1,hp[1],'2P')}</div>
     <p class="tiny" style="text-align:center">더 설득력 있는 쪽에 손을 들게 하고, A·B 또는 1·2 키로 표를 더하세요. 표를 많이 받을수록 상대의 체력이 줄어듭니다.</p>`;
@@ -454,7 +529,7 @@ function renderBoss(){
       <h2>책임의 히드라</h2>
       <p class="sub">머리를 하나 베면, 다른 머리가 말한다. “내 책임 아니야.”</p>
       <div class="sprite-wrap"></div>
-      <div class="think"><b>DISCUSSION · 토론 거리</b>원작 개발자, 다른 개발자, 게이머, 배급사의 주장에는 모두 일리가 있다. 그렇다면 AI로 만든 모방 게임과 복제 협박을 막을 책임은 어디에, 얼마나 나눠야 할까?</div>
+      <div class="think"><b>DISCUSSION · 토론 거리</b>게임 개발자, 다른 개발자, 게이머, 배급사의 주장에는 모두 일리가 있다. AI 회사가 막으면 정당한 개발이 막히고, 안 막으면 복제가 늘어난다. 책임은 어디에, 얼마나 나눠야 할까?</div>
     </div>
     <div class="play">
       <div class="scenario"><p class="q">AI로 베낀 게임 때문에 피해가 생겼다.<br>가장 큰 책임은 누구에게 있을까?</p></div>
@@ -515,7 +590,10 @@ function go(n){
     let a,b;
     if(id==='boss'){a='WARNING!';b='책임의 히드라 출현';}
     else if(id==='end'){a='GAME OVER';b='결과를 집계합니다';}
-    else if(id[0]==='v'){const k=+id.slice(1);a='ROUND '+(k+1);b=VS[k].L.name+' VS '+VS[k].R.name+' · FIGHT!';}
+    else if(id==='news'){a='BREAKING NEWS';b='AI가 게임 복제를 거부하다';}
+    else if(id[0]==='h'){const k=+id.slice(1);a=(k+1)+'합';b=(HAPS[k].by==='L'?VS[0].L.name:VS[0].R.name)+'의 공격!';}
+    else if(id==='v0'){a='JUDGE';b='4합의 승자는? 청중 판정';}
+    else if(id[0]==='v'){const k=+id.slice(1);a='ROUND '+(k+1);b=VS[k].L.name+' VS '+VS[k].R.name;}
     else{const k=+id.slice(1);a='STAGE '+(k+1);b=STAGES[k].name;}
     document.getElementById('s1').textContent=a;document.getElementById('s2').textContent=b;
     splash.classList.remove('go');void splash.offsetWidth;splash.classList.add('go');
